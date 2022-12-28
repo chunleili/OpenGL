@@ -1,0 +1,1 @@
+如果希望使用vcpkg的MANIFEST模式管理所有第三方库，请重命名rename_to_vcpkg_if_use_vcpkg.json为vcpkg.json，这样就会自动下载所有第三方库到build/vcpkg_install目录下

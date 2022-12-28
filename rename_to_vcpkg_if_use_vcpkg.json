@@ -1,0 +1,13 @@
+{
+    "name": "opengl",
+    "version": "0.0.1",
+    "description": "learn the OpenGL",
+    "dependencies": [
+        "eigen3",
+        "imgui",
+        "glfw3",
+        "glm",
+        "glad",
+        "assimp"
+    ]
+}
