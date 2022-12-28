@@ -1,9 +1,14 @@
-#include <iostream>
 // GLEW中包含了OpenGL的头文件, 因此要放在glfw的前面
 // #define GLEW_STATIC //由于已经在cmake中定义了, 所以这里不需要再定义了
 #include <GL/glew.h>
 // GLFW
 #include <GLFW/glfw3.h>
+
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <filesystem>
 
 // Window dimensions
 const GLuint WIDTH = 1000, HEIGHT = 800;
@@ -17,51 +22,56 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
         glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
-void checkCompile(GLuint shader)
+// 读取着色器文件
+static std::string parseShader(const std::string& filepath)
 {
-    //检查编译是否成功
-    GLint success;  //用于存储编译是否成功
-    GLchar infoLog[512];    //用于存储错误信息
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if(!success)
+    std::ifstream stream(filepath);
+
+    std::string line;
+    std::stringstream ss;
+
+    while(getline(stream, line))
     {
-        glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
+        ss << line << std::endl;
     }
+
+    return ss.str();
 }
+
 
 GLuint createShader()
 {
     // Shaders
-    const GLchar* vertexShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec3 position;\n"
-    "void main()\n"
-    "{\n"
-    "gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
-    "}\0";
-    const GLchar* fragmentShaderSource = "#version 330 core\n"
-    "out vec4 color;\n"
-    "void main()\n"
-    "{\n"
-    "color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-    "}\n\0";
+    const GLchar* vertexShaderSource = parseShader("res/shader/fragShader.glsl").c_str();
+    const GLchar* fragmentShaderSource = parseShader("res/shader/vertexShader.glsl").c_str();
 
-    //创建顶点着色器
-    GLuint vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    //顶点着色器源码
+
+    // Build and compile our shader program
+    // Vertex shader
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
-    //检查编译是否成功
-    checkCompile(vertexShader);
-
-    //创建片段着色器
-    GLuint fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    // Check for compile time errors
+    GLint success;
+    GLchar infoLog[512];
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+    // Fragment shader
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
-    //检查编译是否成功
-    checkCompile(fragmentShader);
+    // Check for compile time errors
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
 
     //创建着色器程序
     GLuint shaderProgram;
@@ -71,9 +81,7 @@ GLuint createShader()
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
-    //检查链接是否成功
-    GLint success;  //用于存储编译是否成功
-    GLchar infoLog[512];    //用于存储错误信息
+
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
     if(!success) 
     {
@@ -104,10 +112,14 @@ void draw_triangle()
     //将顶点数据复制到顶点缓冲对象中
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+    glEnableVertexAttribArray(0);
 }
 
 int main()
 {
+    std::cout << "Current working directory: " << std::filesystem::current_path() << '\n'; 
+
     //初始化GLFW
     std::cout << "Starting GLFW context, OpenGL 3.3" << std::endl;
     glfwInit();

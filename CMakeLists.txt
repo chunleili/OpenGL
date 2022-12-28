@@ -10,6 +10,11 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
+# 设置输出目录为build/bin
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+set(CMAKE_DEBUG_POSTFIX "_d")
 
 # compile the source
 add_executable(main "")
@@ -18,6 +23,14 @@ target_include_directories(main PRIVATE ${SRC_DIR}/include)
 file(GLOB_RECURSE SRC_FILES ${SRC_DIR}/*.cpp ${SRC_DIR}/*.h)
 target_sources(main PRIVATE ${SRC_FILES})
 
+
+# 复制shader等到build/bin目录
+# file(COPY ${PROJECT_SOURCE_DIR}/res DESTINATION ${PROJECT_BINARY_DIR}/bin/$<CONFIG>)
+add_custom_command(
+        TARGET main  POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${PROJECT_SOURCE_DIR}/res ${PROJECT_BINARY_DIR}/bin/$<CONFIG>/res
+    )
 
 # -------------------------------------------------------------------------- #
 #                           set external libraries                           #
