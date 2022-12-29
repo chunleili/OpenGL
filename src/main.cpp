@@ -38,50 +38,51 @@ static std::string parseShader(const std::string& filepath)
     return ss.str();
 }
 
-
-GLuint createShader()
+static unsigned int compileShader(const std::string & source, const unsigned int type)
 {
-    // Shaders
-    const GLchar* vertexShaderSource = parseShader("res/shader/fragShader.glsl").c_str();
-    const GLchar* fragmentShaderSource = parseShader("res/shader/vertexShader.glsl").c_str();
+    unsigned int id = glCreateShader(type);
+    const char* src = source.c_str();
+    glShaderSource(id, 1, &src, nullptr);
+    glCompileShader(id);
 
+    std::cout << "compileShader id: " << id << std::endl;
 
-    // Build and compile our shader program
-    // Vertex shader
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    // Check for compile time errors
-    GLint success;
-    GLchar infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
+    // 检查编译错误
+    int success;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &success);
+    if(success == GL_FALSE)
     {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    // Fragment shader
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    // Check for compile time errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+        int length;
+        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+        char* message = (char*)alloca(length * sizeof(char));
+        glGetShaderInfoLog(id, length, &length, message);
+        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!" << std::endl;
+        std::cout << message << std::endl;
+        glDeleteShader(id);
+        return 0;
     }
 
+    return id;
+}
+
+static unsigned int createShader()
+{
+    std::string  fragmentShaderSource  = parseShader("res/shader/fragShader.glsl");
+    std::string  vertexShaderSource = parseShader("res/shader/vertexShader.glsl");
+    unsigned int vertexShader = compileShader(vertexShaderSource, GL_VERTEX_SHADER);
+    unsigned int fragmentShader = compileShader(fragmentShaderSource, GL_FRAGMENT_SHADER);
 
     //创建着色器程序
     GLuint shaderProgram;
     shaderProgram = glCreateProgram();
+    std::cout<<"shaderProgram: "<<shaderProgram<<std::endl;
 
     //将着色器附加到着色器程序上，并链接着色器程序
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
-
+    GLint success;
+    GLchar infoLog[512];
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
     if(!success) 
     {
@@ -96,7 +97,7 @@ GLuint createShader()
 }
 
 
-unsigned int draw_triangle()
+unsigned int drawTriangle()
 {
     //顶点数据, 三角形
     GLfloat vertices[] = {
@@ -179,7 +180,7 @@ int main()
     GLuint shaderProgram =  createShader();
 
     //绘制三角形
-    unsigned int VAO = draw_triangle();
+    unsigned int VAO = drawTriangle();
 
     //渲染循环
     while(!glfwWindowShouldClose(window))
