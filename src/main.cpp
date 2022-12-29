@@ -10,6 +10,9 @@
 #include <sstream>
 #include <filesystem>
 
+#undef NDEBUG//先去掉NDEBUG宏让断言发挥作用
+#include <cassert>//记住一定要在上一行的后面
+
 // Window dimensions
 const GLuint WIDTH = 800, HEIGHT = 600;
 
@@ -154,6 +157,9 @@ int main()
     //设置当前线程的上下文为window
     glfwMakeContextCurrent(window);
 
+    //设置帧缓冲刷新间隔（垂直同步）
+    glfwSwapInterval(1);
+
     //注册键盘输入回调函数
     glfwSetKeyCallback(window, keyCallback);  
 
@@ -181,6 +187,9 @@ int main()
 
     //绘制三角形
     unsigned int VAO = drawTriangle();
+    
+    float red = 0;
+    float inc = 0.005f;
 
     //渲染循环
     while(!glfwWindowShouldClose(window))
@@ -194,6 +203,16 @@ int main()
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        red += inc;
+        if (red > 1.0f)
+            inc*=-1;
+        if (red < 0.0f)
+            inc*=-1;
+
+        int location = glGetUniformLocation(shaderProgram, "u_color");
+        assert(location != -1);
+        glUniform4f(location, red, 0.2f, 0.3f, 1.0f);
 
         glfwSwapBuffers(window);
     }
