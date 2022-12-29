@@ -38,41 +38,39 @@ add_custom_command(
 set(EXTERN_DIR ${PROJECT_SOURCE_DIR}/extern)
 # # assimp
 # add_subdirectory(extern/assimp)
-# # # glad
-# add_library(glad INTERFACE)
-# target_include_directories(glad INTERFACE ${EXTERN_DIR}/glad/include)
-# target_sources(glad INTERFACE ${EXTERN_DIR}/glad/src/glad.c)
-# # eigen
-# add_library(Eigen INTERFACE)
-# target_include_directories(Eigen INTERFACE ${EXTERN_DIR}/eigen)
-# # imgui
-# add_library(imgui INTERFACE)
-# target_include_directories(imgui INTERFACE ${EXTERN_DIR}/imgui)
-# file(GLOB IMGUI_FILES ${EXTERN_DIR}/imgui/*.h ${EXTERN_DIR}/imgui/*.cpp ${EXTERN_DIR}/imgui/backends/*.h ${EXTERN_DIR}/imgui/backends/*.cpp)
-# target_sources(imgui INTERFACE ${IMGUI_FILES})
 
+# eigen
+add_library(Eigen INTERFACE)
+target_include_directories(Eigen INTERFACE ${EXTERN_DIR}/eigen)
 # glm
 add_subdirectory(extern/glm)
 # opengl
-# windows SDK中有opengl的库
-find_package(OpenGL REQUIRED)
+find_package(OpenGL REQUIRED) # windows SDK中有opengl的库
 # glfw
 add_subdirectory(extern/glfw)
-# glew
-# glew的cmake文件有问题，所以这里直接使用编译好的静态库
-add_library(glew STATIC IMPORTED)#使用IMPORTED方式导入静态库
-set_target_properties(glew PROPERTIES IMPORTED_LOCATION ${EXTERN_DIR}/glew/lib/Release/x64/glew32s.lib)#给出静态库的路径
-target_include_directories(glew INTERFACE ${EXTERN_DIR}/glew/include)
-target_compile_definitions(glew INTERFACE GLEW_STATIC)#使用静态库，需要定义这个宏
+# glad
+add_library(glad INTERFACE)
+target_include_directories(glad INTERFACE ${EXTERN_DIR}/glad/include)
+target_sources(glad INTERFACE ${EXTERN_DIR}/glad/src/glad.c)
+
+#glad和glew使用一个即可。这里使用glad, 因此不再使用glew
+option(USE_GLEW "USE_GLEW" OFF)
+if(USE_GLEW)
+    add_subdirectory(extern/glew)
+    # 如果使用GLEW 并且还要link一下！
+endif()
+
+#imgui 
+add_subdirectory(extern/imgui)
 
 target_link_libraries(main PRIVATE
     OpenGL::GL
-    glew
+    glad
     glfw
     glm
+    Eigen
+    imgui
     # assimp
-    # glad
-    # Eigen
 )
 
 

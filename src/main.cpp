@@ -1,8 +1,9 @@
-// GLEW中包含了OpenGL的头文件, 因此要放在glfw的前面
-// #define GLEW_STATIC //由于已经在cmake中定义了, 所以这里不需要再定义了
-#include <GL/glew.h>
-// GLFW
-#include <GLFW/glfw3.h>
+
+// // #define GLEW_STATIC //由于已经在cmake中定义了, 所以这里不需要再定义了
+// #include <GL/glew.h> // GLEW中包含了OpenGL的头文件, 因此要放在glfw的前面
+
+#include <glad/glad.h> // GLAD
+#include <GLFW/glfw3.h>// GLFW
 
 #include <iostream>
 #include <string>
@@ -142,13 +143,20 @@ int main()
     //注册键盘输入回调函数
     glfwSetKeyCallback(window, keyCallback);  
 
-    //初始化GLEW, 告知其使用modern mode
-    glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK)
+    //初始化GLAD(如果采用GLEW, 请使用下面注释掉的代码)
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        std::cout << "Failed to initialize GLEW" << std::endl;
+        std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    // //初始化GLEW
+    // glewExperimental = GL_TRUE;
+    // if (glewInit() != GLEW_OK)
+    // {
+    //     std::cout << "Failed to initialize GLEW" << std::endl;
+    //     return -1;
+    // }
 
     //设置视口
     int width, height;
