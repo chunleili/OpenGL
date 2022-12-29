@@ -100,38 +100,41 @@ static unsigned int createShader()
 }
 
 
-unsigned int drawTriangle()
+std::tuple<unsigned int, unsigned int> drawTriangle()
 {
-    //顶点数据, 三角形
-    GLfloat vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.0f, 0.5f, 0.0f};
-
-    //创建顶点缓冲对象
-    GLuint VBO;
-    glGenBuffers(1, &VBO);   
-    //绑定顶点缓冲对象
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);  
-    //将顶点数据复制到顶点缓冲对象中
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    // 顶点数据, 三角形
+    float vertices[] = {
+        -0.5f, -0.5f,
+         0.5f, -0.5f,
+         0.5f, 0.5f,
+        -0.5f, 0.5f,
+        };
     
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-    glEnableVertexAttribArray(0);
+    unsigned int indices[] = {
+        0, 1, 2, // 第一个三角形
+        2, 3, 0  // 第二个三角形
+    };
 
+    //VBO
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);   
 
+    //VAO
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);
-    // 1. 绑定VAO
     glBindVertexArray(VAO);
-    // 2. 把顶点数组复制到缓冲中供OpenGL使用
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    // 3. 设置顶点属性指针
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(0);
 
-    return VAO;
+    //EBO
+    unsigned int EBO;
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    return std::make_tuple(VAO,EBO);
 }
 
 int main()
@@ -184,12 +187,17 @@ int main()
     glViewport(0, 0, width, height);
 
     GLuint shaderProgram =  createShader();
+    glUseProgram(shaderProgram);
 
     //绘制三角形
-    unsigned int VAO = drawTriangle();
+    unsigned int numTriangles = 2;
+    unsigned int numIndices = 6;
+    auto [VAO, EBO] = drawTriangle();
     
+    int location = glGetUniformLocation(shaderProgram, "u_color");
+    assert(location != -1);
     float red = 0;
-    float inc = 0.005f;
+    float inc = 0.01f;
 
     //渲染循环
     while(!glfwWindowShouldClose(window))
@@ -200,19 +208,16 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shaderProgram);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
         red += inc;
         if (red > 1.0f)
             inc*=-1;
         if (red < 0.0f)
             inc*=-1;
 
-        int location = glGetUniformLocation(shaderProgram, "u_color");
-        assert(location != -1);
         glUniform4f(location, red, 0.2f, 0.3f, 1.0f);
+
+        // glDrawArrays(GL_TRIANGLES, 0, numTriangles*3);
+        glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
 
         glfwSwapBuffers(window);
     }
