@@ -54,7 +54,7 @@ target_include_directories(glad INTERFACE ${EXTERN_DIR}/glad/include)
 target_sources(glad INTERFACE ${EXTERN_DIR}/glad/src/glad.c)
 
 #glad和glew使用一个即可。这里使用glad, 因此不再使用glew
-option(USE_GLEW "USE_GLEW" OFF)
+option(USE_GLEW "use glew(Not recommend, now we use glad instead)" OFF)
 if(USE_GLEW)
     add_subdirectory(extern/glew)
     # 如果使用GLEW 并且还要link一下！

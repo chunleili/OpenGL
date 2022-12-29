@@ -1,4 +1,3 @@
-
 // // #define GLEW_STATIC //由于已经在cmake中定义了, 所以这里不需要再定义了
 // #include <GL/glew.h> // GLEW中包含了OpenGL的头文件, 因此要放在glfw的前面
 
@@ -12,7 +11,7 @@
 #include <filesystem>
 
 // Window dimensions
-const GLuint WIDTH = 1000, HEIGHT = 800;
+const GLuint WIDTH = 800, HEIGHT = 600;
 
 // 键盘输入回调函数
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode)
@@ -97,7 +96,7 @@ GLuint createShader()
 }
 
 
-void draw_triangle()
+unsigned int draw_triangle()
 {
     //顶点数据, 三角形
     GLfloat vertices[] = {
@@ -115,6 +114,20 @@ void draw_triangle()
     
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
     glEnableVertexAttribArray(0);
+
+
+    unsigned int VAO;
+    glGenVertexArrays(1, &VAO);
+    // 1. 绑定VAO
+    glBindVertexArray(VAO);
+    // 2. 把顶点数组复制到缓冲中供OpenGL使用
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    // 3. 设置顶点属性指针
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    return VAO;
 }
 
 int main()
@@ -166,7 +179,7 @@ int main()
     GLuint shaderProgram =  createShader();
 
     //绘制三角形
-    draw_triangle();
+    unsigned int VAO = draw_triangle();
 
     //渲染循环
     while(!glfwWindowShouldClose(window))
@@ -178,6 +191,8 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shaderProgram);
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window);
     }
