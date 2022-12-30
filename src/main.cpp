@@ -13,6 +13,9 @@
 #undef NDEBUG//先去掉NDEBUG宏让断言发挥作用
 #include <cassert>//记住一定要在上一行的后面
 
+#include "indexBuffer.h"
+#include "vertexBuffer.h"
+
 // Window dimensions
 const GLuint WIDTH = 800, HEIGHT = 600;
 
@@ -100,43 +103,6 @@ static unsigned int createShader()
 }
 
 
-std::tuple<unsigned int, unsigned int> drawTriangle()
-{
-    // 顶点数据, 三角形
-    float vertices[] = {
-        -0.5f, -0.5f,
-         0.5f, -0.5f,
-         0.5f, 0.5f,
-        -0.5f, 0.5f,
-        };
-    
-    unsigned int indices[] = {
-        0, 1, 2, // 第一个三角形
-        2, 3, 0  // 第二个三角形
-    };
-
-    //VBO
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);   
-
-    //VAO
-    unsigned int VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    glEnableVertexAttribArray(0);
-
-    //EBO
-    unsigned int EBO;
-    glGenBuffers(1, &EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    return std::make_tuple(VAO,EBO);
-}
-
 int main()
 {
     std::cout << "Current working directory: " << std::filesystem::current_path() << '\n'; 
@@ -189,10 +155,33 @@ int main()
     GLuint shaderProgram =  createShader();
     glUseProgram(shaderProgram);
 
+{
+
     //绘制三角形
     unsigned int numTriangles = 2;
     unsigned int numIndices = 6;
-    auto [VAO, EBO] = drawTriangle();
+    // 顶点数据, 三角形
+    float vertices[] = {
+        -0.5f, -0.5f,
+         0.5f, -0.5f,
+         0.5f, 0.5f,
+        -0.5f, 0.5f,
+        };
+    
+    unsigned int indices[] = {
+        0, 1, 2, // 第一个三角形
+        2, 3, 0  // 第二个三角形
+    };
+
+    //VAO
+    unsigned int VAO;
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+    //VBO
+    VertexBuffer vbo(vertices, sizeof(vertices));
+    //IBO
+    IndexBuffer ibo(indices, numIndices);
+
     
     int location = glGetUniformLocation(shaderProgram, "u_color");
     assert(location != -1);
@@ -221,6 +210,7 @@ int main()
 
         glfwSwapBuffers(window);
     }
+}
 
     //释放资源
     glfwTerminate();
