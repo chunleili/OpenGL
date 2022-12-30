@@ -3,6 +3,7 @@
 
 #include <glad/glad.h> // GLAD
 #include <GLFW/glfw3.h>// GLFW
+#include <glm/glm.hpp>
 
 #include <iostream>
 #include <string>
@@ -15,6 +16,7 @@
 
 #include "indexBuffer.h"
 #include "vertexBuffer.h"
+#include "shader.h"
 
 // Window dimensions
 const GLuint WIDTH = 800, HEIGHT = 600;
@@ -26,80 +28,6 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
     // 关闭应用程序
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
-}
-
-// 读取着色器文件
-static std::string parseShader(const std::string& filepath)
-{
-    std::ifstream stream(filepath);
-
-    std::string line;
-    std::stringstream ss;
-
-    while(getline(stream, line))
-    {
-        ss << line << std::endl;
-    }
-
-    return ss.str();
-}
-
-static unsigned int compileShader(const std::string & source, const unsigned int type)
-{
-    unsigned int id = glCreateShader(type);
-    const char* src = source.c_str();
-    glShaderSource(id, 1, &src, nullptr);
-    glCompileShader(id);
-
-    std::cout << "compileShader id: " << id << std::endl;
-
-    // 检查编译错误
-    int success;
-    glGetShaderiv(id, GL_COMPILE_STATUS, &success);
-    if(success == GL_FALSE)
-    {
-        int length;
-        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-        char* message = (char*)alloca(length * sizeof(char));
-        glGetShaderInfoLog(id, length, &length, message);
-        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!" << std::endl;
-        std::cout << message << std::endl;
-        glDeleteShader(id);
-        return 0;
-    }
-
-    return id;
-}
-
-static unsigned int createShader()
-{
-    std::string  fragmentShaderSource  = parseShader("res/shader/fragShader.glsl");
-    std::string  vertexShaderSource = parseShader("res/shader/vertexShader.glsl");
-    unsigned int vertexShader = compileShader(vertexShaderSource, GL_VERTEX_SHADER);
-    unsigned int fragmentShader = compileShader(fragmentShaderSource, GL_FRAGMENT_SHADER);
-
-    //创建着色器程序
-    GLuint shaderProgram;
-    shaderProgram = glCreateProgram();
-    std::cout<<"shaderProgram: "<<shaderProgram<<std::endl;
-
-    //将着色器附加到着色器程序上，并链接着色器程序
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    GLint success;
-    GLchar infoLog[512];
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if(!success) 
-    {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::LINK_FAILED\n\n" << infoLog << std::endl;
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    return shaderProgram;
 }
 
 
@@ -152,8 +80,10 @@ int main()
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
-    GLuint shaderProgram =  createShader();
-    glUseProgram(shaderProgram);
+    const std::string fragShaderPath = "res/shader/fragShader.glsl";
+    const std::string vertexShaderPath = "res/shader/vertexShader.glsl";
+    Shader shader(vertexShaderPath, fragShaderPath);
+    // shader.use();
 
 {
 
@@ -182,9 +112,6 @@ int main()
     //IBO
     IndexBuffer ibo(indices, numIndices);
 
-    
-    int location = glGetUniformLocation(shaderProgram, "u_color");
-    assert(location != -1);
     float red = 0;
     float inc = 0.01f;
 
@@ -203,8 +130,10 @@ int main()
         if (red < 0.0f)
             inc*=-1;
 
-        glUniform4f(location, red, 0.2f, 0.3f, 1.0f);
-
+        shader.use();
+        shader.setVec4("u_color", glm::vec4(red, 0.2f, 0.3f, 1.0f));
+        // glBindVertexArray(VAO);
+        // ibo.bind();
         // glDrawArrays(GL_TRIANGLES, 0, numTriangles*3);
         glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
 

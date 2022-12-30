@@ -21,6 +21,17 @@ add_executable(main "")
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 target_include_directories(main PRIVATE ${SRC_DIR}/include)
 file(GLOB_RECURSE SRC_FILES ${SRC_DIR}/*.cpp ${SRC_DIR}/*.h)
+# set(SRC_FILES 
+# ${SRC_DIR}/indexBuffer.cpp
+# ${SRC_DIR}/indexBuffer.h
+# ${SRC_DIR}/main.cpp
+# ${SRC_DIR}/renderer.cpp
+# ${SRC_DIR}/renderer.h
+# ${SRC_DIR}/shader.cpp
+# ${SRC_DIR}/shader.h
+# ${SRC_DIR}/vertexBuffer.cpp
+# ${SRC_DIR}/vertexBuffer.h
+# )
 target_sources(main PRIVATE ${SRC_FILES})
 
 
